@@ -50,13 +50,22 @@ src/analysis/stats.py
 src/analysis/subsets.py
     baseline_cohort(conn) -> DataFrame
         melanoma + miraclib + PBMC + time 0
-    samples_per_project(conn) -> DataFrame      # COUNT(*)
+    samples_per_project(conn) -> DataFrame
+        Counts samples, one per row of v_sample_annotated. Not COUNT(*)
+        over v_analysis, which holds five rows per sample.
+        Projects with no sample in the cohort are kept at 0.
     subjects_by_response(conn) -> DataFrame     # COUNT(DISTINCT subject)
     subjects_by_sex(conn) -> DataFrame          # COUNT(DISTINCT subject)
     mean_bcell_melanoma_male_responders_baseline(conn) -> float
+        Returns the mean RAW b_cell COUNT, rounded to 2 decimals.
         FILTERS: condition=melanoma, sex=M, response=yes, time=0
-        NO sample_type filter. NO treatment filter. Round to 2 decimals.
-        Expected slice size: 485 rows.
+        NO sample_type filter. NO treatment filter.
+        Expected slice: 485 rows, 485 subjects. Expected value: 10206.15
+
+    mean_bcell_percentage_melanoma_male_responders_baseline(conn) -> float
+        Same slice, mean relative frequency. Expected value: 9.99
+        Reported as a secondary figure because "average number of B cells"
+        does not state whether count or frequency is meant.
 
 src/analysis/plots.py
     boxplot_responders(df, outpath) -> Path
@@ -69,6 +78,11 @@ outputs/responder_stats_baseline.csv
 outputs/boxplot_responders.png
 outputs/part4_baseline_cohort.csv
 outputs/part4_summary.json
+    Keys, both rounded to 2 decimals:
+      mean_bcell_count_melanoma_male_responders_baseline       10206.15
+      mean_bcell_percentage_melanoma_male_responders_baseline  9.99
+    Plus baseline_cohort_samples, baseline_cohort_subjects,
+    samples_per_project, subjects_by_response, subjects_by_sex.
 
 ## Known cohort sizes, verified in profiling. Treat as regression tests.
 
@@ -82,3 +96,14 @@ Part 3 arms, baseline only:   331 yes / 325 no samples, 331 / 325 subjects
 Part 4 final slice:           485 rows, 485 subjects
 
 If any implementation produces a number other than these, it is a bug.
+
+## Additional verified counts
+
+courses with NULL response  : 474   (subjects: healthy + treatment 'none')
+samples with NULL response  : 1422  (474 x 3)
+
+## Long-format gotcha
+
+v_analysis and v_sample_frequencies are 5 rows per sample.
+Counting samples there requires COUNT(DISTINCT sample), never COUNT(*).
+Counting subjects requires COUNT(DISTINCT subject).
