@@ -160,10 +160,10 @@ is that the counts table is five times as many rows, and that a query joins
 rather than reads one row. At 52,500 rows on the current data that cost is
 invisible, and the indexes on the join keys keep it flat as the table grows.
 
-Storage matters at scale too. Growing from 10,500 samples to thousands of samples
-multiplies the repeated metadata in a wide table by the same factor. In the
-normalized schema, adding samples adds rows to `samples` and `sample_counts`
-only. The subject and course rows stay as they are.
+Storage matters at scale too. Growing from the current 10,500 samples toward
+hundreds of thousands multiplies the repeated metadata in a wide table by the
+same factor. In the normalized schema, adding samples adds rows to `samples` and
+`sample_counts` only. The subject and course rows stay as they are.
 
 ### Scaling to many projects and many kinds of analysis
 
@@ -555,9 +555,9 @@ something substantive differs:
 Everything else is printed under a heading saying it is within tolerance and
 expected from the rounding. On the current data that is where every difference
 lands. Every sample count, subject count, magnitude label and significance flag
-agrees exactly. The 61 continuous differences are all at most 1.63e-04, four
-orders of magnitude inside the tolerance, and the largest is the adjusted p
-value at baseline.
+agrees exactly. The 61 continuous differences are all at most 1.63e-04, about
+six times inside the tolerance, and the largest is the adjusted p value at
+baseline.
 
 The U statistic is reported but not gated. It is a rank sum on a scale of
 `n_yes * n_no`, and rounding creates ties that move it by half a rank, so the
