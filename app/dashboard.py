@@ -21,6 +21,7 @@ import matplotlib
 # No display in a Codespace, so a GUI backend would fail at import time.
 matplotlib.use("Agg")
 
+import altair as alt  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
@@ -190,13 +191,29 @@ def format_stats(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def two_column_chart(df: pd.DataFrame):
-    """Bar chart for a small two column summary. Skipped if the shape differs."""
+    """Bar chart for a small two column summary. Skipped if the shape differs.
+
+    Built in Altair rather than st.bar_chart to pin the y axis to zero. Two bars
+    a few units apart near 330 otherwise get an axis chosen from their spread,
+    which ran negative and collided the tick labels. A count axis that does not
+    start at zero also exaggerates the difference between the bars.
+    """
     if df.shape[1] != 2:
         return
     label, value = df.columns[0], df.columns[1]
     if not pd.api.types.is_numeric_dtype(df[value]):
         return
-    st.bar_chart(df.set_index(label)[value])
+    chart = (
+        alt.Chart(df)
+        .mark_bar()
+        .encode(
+            # labelAngle 0 because every category here is two to four characters.
+            x=alt.X(f"{label}:N", title=None, axis=alt.Axis(labelAngle=0)),
+            y=alt.Y(f"{value}:Q", title=value, scale=alt.Scale(domainMin=0, nice=True)),
+        )
+        .properties(height=220)
+    )
+    st.altair_chart(chart, width="stretch")
 
 
 if not DB_PATH.exists():
@@ -390,9 +407,9 @@ def render_part4():
     m1.metric("Mean b_cell count", f"{part4['mean_bcell']:,.2f}")
     m2.metric("Mean b_cell relative frequency (%)", f"{part4['mean_bcell_pct']:.2f}")
     st.caption(
-        "The wording \"average number of B cells\" is ambiguous. The count is "
-        "the answer here. Over the same 485 row slice the mean relative "
-        f"frequency is {part4['mean_bcell_pct']:.2f} percent."
+        "Part 4 asks for the average number of B cells, so the count is the "
+        "answer. The mean relative frequency over the same 485 row slice is "
+        "shown alongside."
     )
 
 with tab2:
