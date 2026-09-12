@@ -20,5 +20,8 @@ pipeline:
 	python run_analysis.py
 
 # 0.0.0.0 and headless are what make the forwarded port work in a Codespace.
+# python -m streamlit, not streamlit, for the same reason setup uses python -m
+# pip. The console script lands in ~/.local/bin, which is not on PATH inside
+# make's shell, so a bare streamlit fails with exit 127 in a fresh Codespace.
 dashboard:
-	streamlit run app/dashboard.py --server.address 0.0.0.0 --server.headless true
+	python -m streamlit run app/dashboard.py --server.address 0.0.0.0 --server.headless true

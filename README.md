@@ -165,6 +165,64 @@ multiplies the repeated metadata in a wide table by the same factor. In the
 normalized schema, adding samples adds rows to `samples` and `sample_counts`
 only. The subject and course rows stay as they are.
 
+### Scaling to many projects and many kinds of analysis
+
+`sql/schema.sql` creates nine indexes, and each one exists for a query shape the
+analysis actually uses.
+
+Three sit on `subjects`. `idx_subjects_project` and `idx_subjects_condition`
+serve the filters that open almost every cohort, narrowing to one project or to
+melanoma before any join runs. `idx_subjects_sex` serves the Part 4 breakdown
+and the male filter on the final question.
+
+Three sit on `treatment_courses`. `idx_courses_subject` supports walking from a
+subject to the drugs they were given, which is the direction the sample join
+takes. `idx_courses_treatment` supports the reverse, pulling every subject on
+miraclib. `idx_courses_response` supports splitting a cohort into responders and
+non responders, which Part 3 does twice.
+
+Two sit on `samples`. `idx_samples_course` carries the join from a course down to
+its aliquots. `idx_samples_type_time` is a composite on sample type and
+timepoint together, because the cohort filters never ask for one without the
+other. PBMC at time 0 is a single index lookup rather than a scan with a
+predicate.
+
+The last one, `idx_counts_population`, is composite on `sample_counts` with
+`population_id` first and `sample_id` second. The column order is the point. The
+common access pattern is one population across many samples, comparing b_cell
+across a cohort, not all five populations of one sample. Leading on population
+turns that into a contiguous range read.
+
+Several analyses the assignment does not ask for need no migration to support.
+Longitudinal change within a subject works because samples are keyed to a course
+and carry their own timepoint, so tracking one subject across timepoints 0, 7 and
+14 is a filter and an order by, not a reshape. Cross project and cross condition
+comparison works because both are subject attributes behind lookup tables, so
+grouping by either is a join already indexed. Response prediction for a drug
+other than miraclib works because `treatment_courses` is one row per subject per
+drug rather than an assumption that a subject has one drug, so a second course
+for the same subject needs no new table.
+
+A new measurement type is cheap for the same reason long format is. A cytokine
+panel, or a different assay on the same aliquots, is a new row in
+`cell_populations` and rows in `sample_counts`, or at most a sibling counts table
+keyed on the same `sample_id`. No existing table changes and no existing query
+breaks, because nothing in the analysis enumerates population columns by name.
+
+It does not scale forever. `v_analysis` is a view, so it is recomputed on every
+query, and the per sample window function that produces `total_count` and
+`percentage` is cheap at this size but not free. At thousands of samples across
+hundreds of projects, the move is to materialize the frequency table during the
+pipeline and index it. `run_analysis.py` is the right place for that, since it
+already runs after the load and already writes derived files.
+
+Past that point the constraint stops being the schema. The same DDL moves to
+Postgres nearly unchanged, which buys concurrent writers and real query planning.
+Beyond that the split is by workload rather than by size: analytics that scan
+whole populations across every project, rather than filtering down to a cohort
+first, belong in a columnar store fed from this one, with the relational database
+kept as the system of record.
+
 ### Why response lives on treatment_courses
 
 Response is an outcome of a subject being treated with a drug. It is not a
