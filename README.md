@@ -484,7 +484,11 @@ fourth decimal. No conclusion in this analysis depends on it.
 
 ## Dashboard
 
-Deployed dashboard: TKTK
+Deployed dashboard: https://cell-count-analysis-01.streamlit.app
+
+The hosted app sleeps after a period of inactivity. If it shows a wake screen,
+give it about thirty seconds. It can also be run locally or in a Codespace with
+`make dashboard`.
 
 ## Tests
 
