@@ -1,0 +1,19 @@
+{
+  "baseline_cohort_samples": 656,
+  "baseline_cohort_subjects": 656,
+  "mean_bcell_count_melanoma_male_responders_baseline": 10206.15,
+  "mean_bcell_percentage_melanoma_male_responders_baseline": 9.99,
+  "samples_per_project": {
+    "prj1": 384,
+    "prj2": 0,
+    "prj3": 272
+  },
+  "subjects_by_response": {
+    "no": 325,
+    "yes": 331
+  },
+  "subjects_by_sex": {
+    "F": 312,
+    "M": 344
+  }
+}
