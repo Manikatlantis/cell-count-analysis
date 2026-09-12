@@ -129,11 +129,14 @@ timepoint.
 
 ### Why normalized, and why long format
 
+The question is how this scales to hundreds of projects and thousands of
+samples. This extract already holds 10,500 samples across 3 projects, so the
+sample axis is at the scale the question names and the project axis is the one
+still ahead.
+
 The obvious alternative is one wide table that mirrors the CSV, one row per
-sample with five count columns. The question is how the design holds up at
-hundreds of projects and thousands of samples, and this extract already holds
-10,500 samples across 3 projects. The sample axis is therefore already at the
-scale the question names, and the project axis is the one still ahead.
+sample with five count columns. That works at the current size and does not hold
+up on either axis.
 
 A wide table repeats every subject level fact on every row. Age, sex, condition
 and project are stored once per sample rather than once per subject. Today that
@@ -215,8 +218,8 @@ It does not scale forever. `v_analysis` is a view, so it is recomputed on every
 query, and the per sample window function that produces `total_count` and
 `percentage` is cheap at this size but not free. At hundreds of thousands of
 samples across hundreds of projects, the move is to materialize the frequency
-table during the pipeline and index it. `run_analysis.py` is the right place for
-that, since it already runs after the load and already writes derived files.
+table during the pipeline and index it. `run_analysis.py` is the right place for that, since it
+already runs after the load and already writes derived files.
 
 Past that point the constraint stops being the schema. The same DDL moves to
 Postgres nearly unchanged, which buys concurrent writers and real query planning.
