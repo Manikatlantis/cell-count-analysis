@@ -130,8 +130,10 @@ timepoint.
 ### Why normalized, and why long format
 
 The obvious alternative is one wide table that mirrors the CSV, one row per
-sample with five count columns. That works at the current size. It does not hold
-up as the study grows toward hundreds of projects and thousands of samples.
+sample with five count columns. The question is how the design holds up at
+hundreds of projects and thousands of samples, and this extract already holds
+10,500 samples across 3 projects. The sample axis is therefore already at the
+scale the question names, and the project axis is the one still ahead.
 
 A wide table repeats every subject level fact on every row. Age, sex, condition
 and project are stored once per sample rather than once per subject. Today that
@@ -211,10 +213,10 @@ breaks, because nothing in the analysis enumerates population columns by name.
 
 It does not scale forever. `v_analysis` is a view, so it is recomputed on every
 query, and the per sample window function that produces `total_count` and
-`percentage` is cheap at this size but not free. At thousands of samples across
-hundreds of projects, the move is to materialize the frequency table during the
-pipeline and index it. `run_analysis.py` is the right place for that, since it
-already runs after the load and already writes derived files.
+`percentage` is cheap at this size but not free. At hundreds of thousands of
+samples across hundreds of projects, the move is to materialize the frequency
+table during the pipeline and index it. `run_analysis.py` is the right place for
+that, since it already runs after the load and already writes derived files.
 
 Past that point the constraint stops being the schema. The same DDL moves to
 Postgres nearly unchanged, which buys concurrent writers and real query planning.
@@ -394,8 +396,9 @@ whenever more than one timepoint is included.
 The figure draws a box per group per population with every individual sample
 plotted over it.
 
-The groups here are large, several hundred samples per arm, so the reason is not
-that a box drawn over few points overstates its own certainty. The reason is
+The groups here are large, roughly a thousand samples per arm across all
+timepoints and a few hundred at baseline, so the reason is not that a box drawn
+over few points overstates its own certainty. The reason is
 that the result being reported is a near identical pair of medians, and a reader
 has no way to judge that claim from two boxes alone.
 
