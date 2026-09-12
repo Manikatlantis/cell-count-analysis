@@ -218,8 +218,8 @@ It does not scale forever. `v_analysis` is a view, so it is recomputed on every
 query, and the per sample window function that produces `total_count` and
 `percentage` is cheap at this size but not free. At hundreds of thousands of
 samples across hundreds of projects, the move is to materialize the frequency
-table during the pipeline and index it. `run_analysis.py` is the right place for that, since it
-already runs after the load and already writes derived files.
+table during the pipeline and index it. `run_analysis.py` is the right place
+for that, since it already runs after the load and already writes derived files.
 
 Past that point the constraint stops being the schema. The same DDL moves to
 Postgres nearly unchanged, which buys concurrent writers and real query planning.
@@ -401,9 +401,9 @@ plotted over it.
 
 The groups here are large, roughly a thousand samples per arm across all
 timepoints and a few hundred at baseline, so the reason is not that a box drawn
-over few points overstates its own certainty. The reason is
-that the result being reported is a near identical pair of medians, and a reader
-has no way to judge that claim from two boxes alone.
+over few points overstates its own certainty. The reason is that the result
+being reported is a near identical pair of medians, and a reader has no way to
+judge that claim from two boxes alone.
 
 Overlaying the points answers the question the boxes raise. Both distributions
 are broad, unimodal and heavily overlapping, and they cover the same range at
